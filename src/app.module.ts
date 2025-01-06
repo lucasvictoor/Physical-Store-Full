@@ -4,7 +4,5 @@ import { StoreModule } from './modules/store.module';
 
 @Module({
   imports: [DatabaseConnection, StoreModule],
-  controllers: [],
-  providers: [],
 })
 export class AppModule {}
