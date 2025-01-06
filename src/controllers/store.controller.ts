@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   Post,
   Body,
@@ -12,7 +13,7 @@ import { Store } from '../models/store.model';
 import { ViaCepService } from '../services/viacep.service';
 import { GeocodingService } from '../services/geocoding.service';
 
-@Controller('stores') // Define o prefixo para as rotas (ex.: /api/stores)
+@Controller('stores')
 export class StoreController {
   constructor(
     private readonly storeService: StoreService,
@@ -58,9 +59,29 @@ export class StoreController {
     return store;
   }
 
+  // Rota para deletar uma loja pelo ID
+  @Delete(':id')
+  async deleteStore(@Param('id') id: string): Promise<{ message: string }> {
+    try {
+      return await this.storeService.delete(id);
+    } catch (error) {
+      throw new NotFoundException(error.message);
+    }
+  }
+
   // Rota para criar uma nova loja
   @Post()
-  async createStore(@Body() storeData: Partial<Store>): Promise<Store> {
-    return this.storeService.create(storeData);
+  async createStore(
+    @Body() body: { name: string; postalCode: string },
+  ): Promise<Store> {
+    const { name, postalCode } = body;
+
+    if (!name || !postalCode) {
+      throw new NotFoundException(
+        'Nome e CEP são obrigatórios para criar uma loja.',
+      );
+    }
+
+    return this.storeService.create({ name, postalCode });
   }
 }
