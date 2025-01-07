@@ -6,30 +6,20 @@ import { firstValueFrom } from 'rxjs';
 export class GeocodingService {
   constructor(private readonly httpService: HttpService) {}
 
-  async getCoordinates(
-    address: string,
-  ): Promise<{ latitude: number; longitude: number }> {
-    try {
-      const apiKey = process.env.GOOGLE_API_KEY;
-      const response = await firstValueFrom(
-        this.httpService.get(
-          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-            address,
-          )}&key=${apiKey}`,
-        ),
-      );
+  async getCoordinates(address: string): Promise<{ latitude: number; longitude: number }> {
+    console.log(`Buscando coordenadas para o endereço: ${address}`);
 
-      if (response.data.status !== 'OK') {
-        throw new Error('Erro na geocodificação.');
-      }
+    const apiKey = process.env.GOOGLE_API_KEY;
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
 
-      const location = response.data.results[0].geometry.location;
-      return {
-        latitude: location.lat,
-        longitude: location.lng,
-      };
-    } catch (error) {
-      throw new Error(`Erro ao buscar coordenadas: ${error.message}`);
+    const response = await firstValueFrom(this.httpService.get(url));
+    const data = response.data;
+
+    if (data.status !== 'OK' || data.results.length === 0) {
+      throw new Error(`Erro ao buscar coordenadas: ${data.status}`);
     }
+
+    const { lat, lng } = data.results[0].geometry.location;
+    return { latitude: lat, longitude: lng };
   }
 }

@@ -1,24 +1,18 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  NotFoundException,
-  Query,
-} from '@nestjs/common';
+import { Controller, Delete, Get, Post, Body, Param, NotFoundException, Query } from '@nestjs/common';
 import { StoreService } from '../services/store.service';
 import { Store } from '../models/store.model';
 import { ViaCepService } from '../services/viacep.service';
 import { GeocodingService } from '../services/geocoding.service';
 
-@Controller('stores') // Define o prefixo para as rotas (ex.: /api/stores)
+@Controller('stores')
 export class StoreController {
   constructor(
     private readonly storeService: StoreService,
     private readonly viaCepService: ViaCepService,
-    private readonly geocodingService: GeocodingService,
-  ) {}
+    private readonly geocodingService: GeocodingService
+  ) {
+    console.log('StoreController carregado com sucesso!');
+  }
 
   // Testar ViaCepService
   @Get('test-cep')
@@ -44,23 +38,60 @@ export class StoreController {
 
   // Rota para listar todas as lojas
   @Get()
-  async getAllStores(): Promise<Store[]> {
-    return this.storeService.findAll();
+  async getAllStores(
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string
+  ): Promise<{ stores: any[]; total: number }> {
+    const parsedLimit = limit ? parseInt(limit, 10) : 10;
+    const parsedOffset = offset ? parseInt(offset, 10) : 0;
+
+    const result = await this.storeService.findAll(parsedLimit, parsedOffset);
+    return result;
+  }
+
+  // Rota para buscar loja por CEP
+  @Get('cep/:cep')
+  async getStoresByCep(@Param('cep') cep: string): Promise<any[]> {
+    console.log('Rota /stores/cep/:cep acessada com o CEP:', cep);
+    try {
+      const result = await this.storeService.findByCep(cep);
+      console.log('Resultado retornado:', result);
+      return result;
+    } catch (error) {
+      console.error('Erro no método getStoresByCep:', error.message);
+      throw new NotFoundException(error.message);
+    }
   }
 
   // Rota para buscar uma loja pelo ID
   @Get(':id')
   async getStoreById(@Param('id') id: string): Promise<Store> {
-    const store = await this.storeService.findById(id);
-    if (!store) {
-      throw new NotFoundException(`Store with ID ${id} not found`);
+    try {
+      return await this.storeService.findById(id);
+    } catch (error) {
+      throw new NotFoundException(error.message);
     }
-    return store;
+  }
+
+  // Rota para deletar uma loja pelo ID
+  @Delete(':id')
+  async deleteStore(@Param('id') id: string): Promise<{ message: string }> {
+    try {
+      return await this.storeService.delete(id);
+    } catch (error) {
+      throw new NotFoundException(error.message);
+    }
   }
 
   // Rota para criar uma nova loja
   @Post()
-  async createStore(@Body() storeData: Partial<Store>): Promise<Store> {
-    return this.storeService.create(storeData);
+  async createStore(@Body() body: { name: string; postalCode: string }): Promise<Store> {
+    const { name, postalCode } = body;
+
+    if (!name || !postalCode) {
+      throw new NotFoundException('Nome e CEP são obrigatórios para criar uma loja.');
+    }
+
+    return this.storeService.create({ name, postalCode });
   }
 }
