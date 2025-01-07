@@ -12,12 +12,9 @@ export class AppLoggerService implements LoggerService {
         winston.format.timestamp(),
         winston.format.printf(({ timestamp, level, message }) => {
           return `[${timestamp}] [${level.toUpperCase()}]: ${message}`;
-        }),
+        })
       ),
-      transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'logs/app.log' }),
-      ],
+      transports: [new winston.transports.Console(), new winston.transports.File({ filename: 'logs/app.log' })]
     });
   }
 

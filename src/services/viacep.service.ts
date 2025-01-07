@@ -6,13 +6,9 @@ import { firstValueFrom } from 'rxjs';
 export class ViaCepService {
   constructor(private readonly httpService: HttpService) {}
 
-  async getAddress(
-    cep: string,
-  ): Promise<{ logradouro: string; localidade: string; uf: string }> {
+  async getAddress(cep: string): Promise<{ logradouro: string; localidade: string; uf: string }> {
     try {
-      const response = await firstValueFrom(
-        this.httpService.get(`https://viacep.com.br/ws/${cep}/json/`),
-      );
+      const response = await firstValueFrom(this.httpService.get(`https://viacep.com.br/ws/${cep}/json/`));
 
       if (response.data.erro) {
         throw new Error('CEP inválido.');
@@ -21,7 +17,7 @@ export class ViaCepService {
       return {
         logradouro: response.data.logradouro,
         localidade: response.data.localidade,
-        uf: response.data.uf,
+        uf: response.data.uf
       };
     } catch (error) {
       throw new Error(`Erro ao buscar CEP: ${error.message}`);
