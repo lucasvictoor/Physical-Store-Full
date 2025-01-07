@@ -10,7 +10,9 @@ export class StoreController {
     private readonly storeService: StoreService,
     private readonly viaCepService: ViaCepService,
     private readonly geocodingService: GeocodingService
-  ) {}
+  ) {
+    console.log('StoreController carregado com sucesso!');
+  }
 
   // Testar ViaCepService
   @Get('test-cep')
@@ -45,6 +47,20 @@ export class StoreController {
 
     const result = await this.storeService.findAll(parsedLimit, parsedOffset);
     return result;
+  }
+
+  // Rota para buscar loja por CEP
+  @Get('cep/:cep')
+  async getStoresByCep(@Param('cep') cep: string): Promise<any[]> {
+    console.log('Rota /stores/cep/:cep acessada com o CEP:', cep);
+    try {
+      const result = await this.storeService.findByCep(cep);
+      console.log('Resultado retornado:', result);
+      return result;
+    } catch (error) {
+      console.error('Erro no método getStoresByCep:', error.message);
+      throw new NotFoundException(error.message);
+    }
   }
 
   // Rota para buscar uma loja pelo ID

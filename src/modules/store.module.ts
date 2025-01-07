@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { HttpModule } from '@nestjs/axios';
 import { StoreController } from '../controllers/store.controller';
@@ -8,11 +8,12 @@ import { ViaCepService } from '../services/viacep.service';
 import { GeocodingService } from '../services/geocoding.service';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: Store.name, schema: StoreSchema }]),
-    HttpModule, // Importa o HttpModule para usar chamadas HTTP
-  ],
+  imports: [MongooseModule.forFeature([{ name: Store.name, schema: StoreSchema }]), HttpModule],
   controllers: [StoreController],
-  providers: [StoreService, ViaCepService, GeocodingService],
+  providers: [StoreService, ViaCepService, GeocodingService]
 })
-export class StoreModule {}
+export class StoreModule implements OnModuleInit {
+  onModuleInit() {
+    console.log('StoreModule carregado com sucesso!');
+  }
+}
