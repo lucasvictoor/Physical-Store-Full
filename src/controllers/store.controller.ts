@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Delete,
-  Get,
-  Post,
-  Body,
-  Param,
-  NotFoundException,
-  Query,
-} from '@nestjs/common';
+import { Controller, Delete, Get, Post, Body, Param, NotFoundException, Query } from '@nestjs/common';
 import { StoreService } from '../services/store.service';
 import { Store } from '../models/store.model';
 import { ViaCepService } from '../services/viacep.service';
@@ -18,7 +9,7 @@ export class StoreController {
   constructor(
     private readonly storeService: StoreService,
     private readonly viaCepService: ViaCepService,
-    private readonly geocodingService: GeocodingService,
+    private readonly geocodingService: GeocodingService
   ) {}
 
   // Testar ViaCepService
@@ -45,8 +36,15 @@ export class StoreController {
 
   // Rota para listar todas as lojas
   @Get()
-  async getAllStores(): Promise<Store[]> {
-    return this.storeService.findAll();
+  async getAllStores(
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string
+  ): Promise<{ stores: any[]; total: number }> {
+    const parsedLimit = limit ? parseInt(limit, 10) : 10;
+    const parsedOffset = offset ? parseInt(offset, 10) : 0;
+
+    const result = await this.storeService.findAll(parsedLimit, parsedOffset);
+    return result;
   }
 
   // Rota para buscar uma loja pelo ID
@@ -71,15 +69,11 @@ export class StoreController {
 
   // Rota para criar uma nova loja
   @Post()
-  async createStore(
-    @Body() body: { name: string; postalCode: string },
-  ): Promise<Store> {
+  async createStore(@Body() body: { name: string; postalCode: string }): Promise<Store> {
     const { name, postalCode } = body;
 
     if (!name || !postalCode) {
-      throw new NotFoundException(
-        'Nome e CEP são obrigatórios para criar uma loja.',
-      );
+      throw new NotFoundException('Nome e CEP são obrigatórios para criar uma loja.');
     }
 
     return this.storeService.create({ name, postalCode });

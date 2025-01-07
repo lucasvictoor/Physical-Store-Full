@@ -10,11 +10,16 @@ export class StoreService {
   constructor(
     @InjectModel(Store.name) private readonly storeModel: Model<Store>,
     private readonly viaCepService: ViaCepService,
-    private readonly geocodingService: GeocodingService,
+    private readonly geocodingService: GeocodingService
   ) {}
 
-  async findAll(): Promise<Store[]> {
-    return this.storeModel.find().exec();
+  async findAll(limit = 10, offset = 0): Promise<{ stores: Store[]; total: number }> {
+    const [stores, total] = await Promise.all([
+      this.storeModel.find().skip(offset).limit(limit).exec(),
+      this.storeModel.countDocuments().exec()
+    ]);
+
+    return { stores, total };
   }
 
   async findById(id: string): Promise<Store | null> {
@@ -31,10 +36,7 @@ export class StoreService {
     return { message: `Loja com o ID ${id} foi deletada com sucesso.` };
   }
 
-  async create(storeData: {
-    name: string;
-    postalCode: string;
-  }): Promise<Store> {
+  async create(storeData: { name: string; postalCode: string }): Promise<Store> {
     const { name, postalCode } = storeData;
 
     // Remove caracteres desnecessários do CEP
@@ -54,10 +56,7 @@ export class StoreService {
       if (error.message.includes('ZERO_RESULTS')) {
         // Tenta buscar coordenadas usando o endereço completo
         const fullAddress = `${viaCepData.logradouro}, ${viaCepData.localidade}, ${viaCepData.uf}`;
-        console.log(
-          'Tentando geocodificação com endereço completo:',
-          fullAddress,
-        );
+        console.log('Tentando geocodificação com endereço completo:', fullAddress);
         coordinates = await this.geocodingService.getCoordinates(fullAddress);
       } else {
         throw error;
@@ -70,7 +69,7 @@ export class StoreService {
       address: `${viaCepData.logradouro}, ${viaCepData.localidade}, ${viaCepData.uf}`,
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
-      phone: 'N/A',
+      phone: 'N/A'
     };
 
     // Salva no banco de dados
