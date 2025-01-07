@@ -22,8 +22,12 @@ export class StoreService {
     return { stores, total };
   }
 
-  async findById(id: string): Promise<Store | null> {
-    return this.storeModel.findById(id).exec();
+  async findById(id: string): Promise<Store> {
+    const store = await this.storeModel.findById(id).exec();
+    if (!store) {
+      throw new Error(`Loja com o ID ${id} não foi encontrada.`);
+    }
+    return store;
   }
 
   async delete(id: string): Promise<{ message: string }> {

@@ -50,11 +50,11 @@ export class StoreController {
   // Rota para buscar uma loja pelo ID
   @Get(':id')
   async getStoreById(@Param('id') id: string): Promise<Store> {
-    const store = await this.storeService.findById(id);
-    if (!store) {
-      throw new NotFoundException(`Store with ID ${id} not found`);
+    try {
+      return await this.storeService.findById(id);
+    } catch (error) {
+      throw new NotFoundException(error.message);
     }
-    return store;
   }
 
   // Rota para deletar uma loja pelo ID
