@@ -41,22 +41,12 @@ export class StoreService {
 
     console.log('Dados do ViaCEP:', viaCepData);
 
-    // Buscar coordenadas pelo CEP
-    let userCoordinates;
-    try {
-      userCoordinates = await this.geocodingService.getCoordinates(cep);
-    } catch (error) {
-      if (error.message.includes('ZERO_RESULTS')) {
-        // Fallback caso necessário
-        const fullAddress = `${viaCepData.logradouro}, ${viaCepData.localidade}, ${viaCepData.uf}`;
-        console.log('Tentando geocodificação com endereço completo:', fullAddress);
-        userCoordinates = await this.geocodingService.getCoordinates(fullAddress);
-      } else {
-        throw error;
-      }
-    }
+    // Buscar coordenadas pelo endereço completo
+    const fullAddress = `${viaCepData.logradouro}, ${viaCepData.localidade}, ${viaCepData.uf}`;
+    console.log('Buscando coordenadas para o endereço completo:', fullAddress);
+    const userCoordinates = await this.geocodingService.getCoordinates(fullAddress);
 
-    console.log('Coordenadas do CEP fornecido:', userCoordinates);
+    console.log('Coordenadas do endereço fornecido:', userCoordinates);
 
     const stores = await this.storeModel.find().exec();
 
