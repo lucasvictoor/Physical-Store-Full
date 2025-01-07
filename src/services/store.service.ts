@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { Store } from '../models/store.model';
 import { ViaCepService } from './viacep.service';
 import { GeocodingService } from './geocoding.service';
+import { calculateDistance } from '../utils/conv-distance';
 
 @Injectable()
 export class StoreService {
@@ -28,6 +29,77 @@ export class StoreService {
       throw new Error(`Loja com o ID ${id} não foi encontrada.`);
     }
     return store;
+  }
+
+  async findByCep(cep: string): Promise<any> {
+    console.log('CEP recebido no serviço:', cep);
+
+    const viaCepData = await this.viaCepService.getAddress(cep);
+    if (!viaCepData) {
+      throw new Error('CEP inválido ou não encontrado.');
+    }
+
+    console.log('Dados do ViaCEP:', viaCepData);
+
+    // Buscar coordenadas pelo CEP
+    let userCoordinates;
+    try {
+      userCoordinates = await this.geocodingService.getCoordinates(cep);
+    } catch (error) {
+      if (error.message.includes('ZERO_RESULTS')) {
+        // Fallback caso necessário
+        const fullAddress = `${viaCepData.logradouro}, ${viaCepData.localidade}, ${viaCepData.uf}`;
+        console.log('Tentando geocodificação com endereço completo:', fullAddress);
+        userCoordinates = await this.geocodingService.getCoordinates(fullAddress);
+      } else {
+        throw error;
+      }
+    }
+
+    console.log('Coordenadas do CEP fornecido:', userCoordinates);
+
+    const stores = await this.storeModel.find().exec();
+
+    const storesWithDistance = stores.map((store) => {
+      const distance = calculateDistance(
+        userCoordinates.latitude,
+        userCoordinates.longitude,
+        store.latitude,
+        store.longitude
+      );
+
+      const formattedDistance = parseFloat(distance.toFixed(2));
+      const deliveryType = formattedDistance <= 50 ? 'Motoboy' : 'Correios';
+
+      return {
+        ...store.toObject(),
+        distance: formattedDistance,
+        deliveryType
+      };
+    });
+
+    // Verificar se há lojas próximas
+    if (storesWithDistance.length === 0) {
+      return { message: 'Nenhuma loja encontrada próxima ao CEP fornecido.' };
+    }
+
+    // Ordenar por distância e formatar a resposta
+    return {
+      totalStores: storesWithDistance.length,
+      stores: storesWithDistance
+        .sort((a, b) => a.distance - b.distance)
+        .map((store) => ({
+          id: store._id,
+          name: store.name,
+          location: {
+            address: store.address,
+            latitude: store.latitude,
+            longitude: store.longitude,
+            distance: `${store.distance} km`
+          },
+          deliveryType: store.deliveryType
+        }))
+    };
   }
 
   async delete(id: string): Promise<{ message: string }> {
