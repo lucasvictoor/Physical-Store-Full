@@ -162,4 +162,40 @@ export class StoreService {
     const newStore = new this.storeModel(newStoreData);
     return newStore.save();
   }
+
+  async getStoresByCepWithType(userCep: string): Promise<any> {
+    const userAddress = await this.viaCepService.getAddress(userCep);
+    if (!userAddress || !userAddress.logradouro || !userAddress.localidade || !userAddress.uf) {
+      throw new Error('CEP inválido ou não encontrado.');
+    }
+
+    // Coordenadas
+    const fullUserAddress = `${userAddress.logradouro}, ${userAddress.localidade}, ${userAddress.uf}`;
+    const userCoordinates = await this.geocodingService.getCoordinates(fullUserAddress);
+
+    const stores = await this.storeModel.find().exec();
+
+    // Classificar as lojas
+    const storesWithType = stores.map((store) => {
+      const distance = calculateDistance(
+        userCoordinates.latitude,
+        userCoordinates.longitude,
+        store.latitude,
+        store.longitude
+      );
+
+      const type = distance <= 50 ? 'PDV' : 'Loja';
+
+      return {
+        ...store.toObject(),
+        distance: parseFloat(distance.toFixed(2)),
+        type
+      };
+    });
+
+    return {
+      totalStores: storesWithType.length,
+      stores: storesWithType.sort((a, b) => a.distance - b.distance)
+    };
+  }
 }

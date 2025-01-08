@@ -78,4 +78,14 @@ export class StoreController {
   async createStore(@Body() body: CreateStoreDto): Promise<Store> {
     return this.storeService.create(body);
   }
+
+  // Rota para retornar as lojas com tipo PDV ou Loja
+  @Get('type/cep/:cep')
+  async getStoresWithTypeByCep(@Param('cep') cep: string): Promise<any> {
+    try {
+      return await this.storeService.getStoresByCepWithType(cep);
+    } catch (error) {
+      throw new NotFoundException(error.message);
+    }
+  }
 }
