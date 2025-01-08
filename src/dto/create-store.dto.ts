@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsEmail } from 'class-validator';
+import { IsNotEmpty, IsString, IsEmail, IsBoolean, IsNumber } from 'class-validator';
 
 export class CreateStoreDto {
   @IsNotEmpty()
@@ -16,4 +16,16 @@ export class CreateStoreDto {
   @IsNotEmpty()
   @IsEmail()
   email: string;
+
+  @IsNotEmpty()
+  @IsBoolean()
+  takeOutInStore: boolean;
+
+  @IsNotEmpty()
+  @IsNumber()
+  shippingTimeInDays: number;
+
+  @IsNotEmpty()
+  @IsString()
+  country: string;
 }

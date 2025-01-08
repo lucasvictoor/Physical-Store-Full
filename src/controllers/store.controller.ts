@@ -4,6 +4,8 @@ import { Store } from '../models/store.model';
 import { ViaCepService } from '../services/viacep.service';
 import { GeocodingService } from '../services/geocoding.service';
 import { CreateStoreDto } from '../dto/create-store.dto';
+import { StoreResponseDto } from '../dto/store-response.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Controller('stores')
 export class StoreController {
@@ -20,12 +22,19 @@ export class StoreController {
   async getAllStores(
     @Query('limit') limit?: string,
     @Query('offset') offset?: string
-  ): Promise<{ stores: any[]; total: number }> {
+  ): Promise<{ stores: StoreResponseDto[]; limit: number; offset: number; total: number }> {
     const parsedLimit = limit ? parseInt(limit, 10) : 10;
     const parsedOffset = offset ? parseInt(offset, 10) : 0;
 
-    const result = await this.storeService.findAll(parsedLimit, parsedOffset);
-    return result;
+    const { stores, total } = await this.storeService.findAll(parsedLimit, parsedOffset);
+    const formattedStores = plainToInstance(StoreResponseDto, stores, { excludeExtraneousValues: true });
+
+    return {
+      stores: formattedStores,
+      limit: parsedLimit,
+      offset: parsedOffset,
+      total
+    };
   }
 
   // Rota para buscar loja por CEP
@@ -77,5 +86,15 @@ export class StoreController {
   @Post()
   async createStore(@Body() body: CreateStoreDto): Promise<Store> {
     return this.storeService.create(body);
+  }
+
+  // Rota para retornar as lojas com tipo PDV ou Loja
+  @Get('type/cep/:cep')
+  async getStoresWithTypeByCep(@Param('cep') cep: string): Promise<any> {
+    try {
+      return await this.storeService.getStoresByCepWithType(cep);
+    } catch (error) {
+      throw new NotFoundException(error.message);
+    }
   }
 }
