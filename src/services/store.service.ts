@@ -113,18 +113,19 @@ export class StoreService {
       throw new Error('Dados incompletos retornados pelo ViaCEP.');
     }
 
-    // Busca as coordenadas usando o Geocoding
-    const fullAddress = `${viaCepData.logradouro}, ${viaCepData.localidade}, ${viaCepData.uf}`;
-    console.log('Tentando geocodificação com endereço completo:', fullAddress);
-    const coordinates = await this.geocodingService.getCoordinates(fullAddress);
+    const state = viaCepData.uf;
+    const city = viaCepData.localidade;
+    const address = `${viaCepData.logradouro}, ${city}, ${state}`;
 
-    const newStoreData = {
+    // Busca as coordenadas usando o Geocoding
+    const coordinates = await this.geocodingService.getCoordinates(address);
       name,
-      address: fullAddress,
+      address,
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
       phone,
-      email
+      email,
+      state
     };
 
     const newStore = new this.storeModel(newStoreData);
