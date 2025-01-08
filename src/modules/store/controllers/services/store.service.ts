@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Store } from '../models/store.model';
+import { Store } from '../../../../database/models/store.model';
 import { ViaCepService } from './viacep.service';
 import { GeocodingService } from './geocoding.service';
-import { calculateDistance } from '../utils/conv-distance';
+import { calculateDistance } from '../../../../common/utils/conv-distance';
 
 @Injectable()
 export class StoreService {

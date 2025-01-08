@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { DatabaseConnection } from './db/conn';
-import { StoreModule } from './modules/store.module';
-import { AppLoggerService } from './utils/logger.service';
+import { DatabaseConnection } from '../database/conn';
+import { StoreModule } from '../modules/store.module';
+import { AppLoggerService } from '../common/utils/logger.service';
 
 @Module({
   imports: [DatabaseConnection, StoreModule],
