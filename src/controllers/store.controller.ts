@@ -4,6 +4,8 @@ import { Store } from '../models/store.model';
 import { ViaCepService } from '../services/viacep.service';
 import { GeocodingService } from '../services/geocoding.service';
 import { CreateStoreDto } from '../dto/create-store.dto';
+import { StoreResponseDto } from '../dto/store-response.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Controller('stores')
 export class StoreController {
@@ -20,26 +22,12 @@ export class StoreController {
   async getAllStores(
     @Query('limit') limit?: string,
     @Query('offset') offset?: string
-  ): Promise<{ stores: any[]; limit: number; offset: number; total: number }> {
+  ): Promise<{ stores: StoreResponseDto[]; limit: number; offset: number; total: number }> {
     const parsedLimit = limit ? parseInt(limit, 10) : 10;
     const parsedOffset = offset ? parseInt(offset, 10) : 0;
 
     const { stores, total } = await this.storeService.findAll(parsedLimit, parsedOffset);
-
-    const formattedStores = stores.map((store) => ({
-      id: store._id,
-      name: store.name,
-      address: store.address,
-      latitude: store.latitude,
-      longitude: store.longitude,
-      phone: store.phone,
-      email: store.email,
-      state: store.state,
-      takeOutInStore: store.takeOutInStore,
-      shippingTimeInDays: store.shippingTimeInDays,
-      postalCode: store.postalCode,
-      country: store.country
-    }));
+    const formattedStores = plainToInstance(StoreResponseDto, stores, { excludeExtraneousValues: true });
 
     return {
       stores: formattedStores,
