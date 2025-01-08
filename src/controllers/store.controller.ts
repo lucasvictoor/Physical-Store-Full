@@ -24,8 +24,29 @@ export class StoreController {
     const parsedLimit = limit ? parseInt(limit, 10) : 10;
     const parsedOffset = offset ? parseInt(offset, 10) : 0;
 
-    const result = await this.storeService.findAll(parsedLimit, parsedOffset);
-    return result;
+    const { stores, total } = await this.storeService.findAll(parsedLimit, parsedOffset);
+
+    const formattedStores = stores.map((store) => ({
+      id: store._id,
+      name: store.name,
+      address: store.address,
+      latitude: store.latitude,
+      longitude: store.longitude,
+      phone: store.phone,
+      email: store.email,
+      state: store.state,
+      takeOutInStore: store.takeOutInStore,
+      shippingTimeInDays: store.shippingTimeInDays,
+      postalCode: store.postalCode,
+      country: store.country
+    }));
+
+    return {
+      stores: formattedStores,
+      limit: parsedLimit,
+      offset: parsedOffset,
+      total
+    };
   }
 
   // Rota para buscar loja por CEP
