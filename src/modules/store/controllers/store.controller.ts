@@ -1,10 +1,10 @@
 import { Controller, Delete, Post, Get, Body, Param, NotFoundException, Query } from '@nestjs/common';
-import { StoreService } from '../services/store.service';
-import { Store } from '../models/store.model';
-import { ViaCepService } from '../services/viacep.service';
-import { GeocodingService } from '../services/geocoding.service';
-import { CreateStoreDto } from '../dto/create-store.dto';
-import { StoreResponseDto } from '../dto/store-response.dto';
+import { StoreService } from './services/store.service';
+import { Store } from '../../../database/models/store.model';
+import { ViaCepService } from './services/viacep.service';
+import { GeocodingService } from './services/geocoding.service';
+import { CreateStoreDto } from '../../../common/dto/create-store.dto';
+import { StoreResponseDto } from '../../../common/dto/store-response.dto';
 import { plainToInstance } from 'class-transformer';
 
 @Controller('stores')
