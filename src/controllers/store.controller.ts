@@ -14,28 +14,6 @@ export class StoreController {
     console.log('StoreController carregado com sucesso!');
   }
 
-  // Testar ViaCepService
-  @Get('test-cep')
-  async testViaCep(@Query('cep') cep: string) {
-    if (!cep) {
-      throw new NotFoundException('CEP não fornecido.');
-    }
-
-    const address = await this.viaCepService.getAddress(cep);
-    return { address };
-  }
-
-  // Testar GeocodingService
-  @Get('test-geocode')
-  async testGeocoding(@Query('address') address: string) {
-    if (!address) {
-      throw new NotFoundException('Endereço não fornecido.');
-    }
-
-    const coordinates = await this.geocodingService.getCoordinates(address);
-    return { coordinates };
-  }
-
   // Rota para listar todas as lojas
   @Get()
   async getAllStores(
