@@ -92,6 +92,23 @@ export class StoreService {
     };
   }
 
+  async findByState(state: string): Promise<{ stores: Store[]; total: number }> {
+    const stores = await this.storeModel
+      .find({
+        state: { $regex: new RegExp(`^${state}$`, 'i') }
+      })
+      .exec();
+
+    if (!stores || stores.length === 0) {
+      throw new Error(`Nenhuma loja encontrada para o estado: ${state}`);
+    }
+
+    return {
+      stores,
+      total: stores.length
+    };
+  }
+
   async delete(id: string): Promise<{ message: string }> {
     const result = await this.storeModel.findByIdAndDelete(id).exec();
 
@@ -119,6 +136,8 @@ export class StoreService {
 
     // Busca as coordenadas usando o Geocoding
     const coordinates = await this.geocodingService.getCoordinates(address);
+
+    const newStoreData = {
       name,
       address,
       latitude: coordinates.latitude,

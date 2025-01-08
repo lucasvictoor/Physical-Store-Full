@@ -52,6 +52,17 @@ export class StoreController {
     }
   }
 
+  // Rota para buscar lojas por estado
+  @Get('state/:state')
+  async getStoresByState(@Param('state') state: string): Promise<{ stores: Store[]; total: number }> {
+    try {
+      return await this.storeService.findByState(state);
+    } catch (error) {
+      console.error('Erro ao buscar lojas por estado:', error.message);
+      throw new NotFoundException(error.message);
+    }
+  }
+
   // Rota para deletar uma loja pelo ID
   @Delete(':id')
   async deleteStore(@Param('id') id: string): Promise<{ message: string }> {
