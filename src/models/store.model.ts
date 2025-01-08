@@ -14,6 +14,15 @@ export class Store extends Document {
 
   @Prop({ required: true })
   longitude: number;
+
+  @Prop({ required: true })
+  phone: string;
+
+  @Prop({ required: true })
+  email: string;
+
+  @Prop({ required: true })
+  state: string;
 }
 
 export const StoreSchema = SchemaFactory.createForClass(Store);
