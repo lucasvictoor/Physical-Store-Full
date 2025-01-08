@@ -105,7 +105,6 @@ export class StoreService {
   async create(storeData: { name: string; postalCode: string }): Promise<Store> {
     const { name, postalCode } = storeData;
 
-    // Remove caracteres desnecessários do CEP
     const formattedCep = postalCode.replace(/[^0-9]/g, '');
 
     // Busca o endereço completo usando o ViaCEP
@@ -114,31 +113,19 @@ export class StoreService {
       throw new Error('Dados incompletos retornados pelo ViaCEP.');
     }
 
-    let coordinates;
-    try {
-      // Tenta buscar coordenadas usando o CEP
-      coordinates = await this.geocodingService.getCoordinates(formattedCep);
-    } catch (error) {
-      if (error.message.includes('ZERO_RESULTS')) {
-        // Tenta buscar coordenadas usando o endereço completo
-        const fullAddress = `${viaCepData.logradouro}, ${viaCepData.localidade}, ${viaCepData.uf}`;
-        console.log('Tentando geocodificação com endereço completo:', fullAddress);
-        coordinates = await this.geocodingService.getCoordinates(fullAddress);
-      } else {
-        throw error;
-      }
-    }
+    // Busca as coordenadas usando o Geocoding
+    const fullAddress = `${viaCepData.logradouro}, ${viaCepData.localidade}, ${viaCepData.uf}`;
+    console.log('Tentando geocodificação com endereço completo:', fullAddress);
+    const coordinates = await this.geocodingService.getCoordinates(fullAddress);
 
-    // Monta os dados completos da loja
     const newStoreData = {
       name,
-      address: `${viaCepData.logradouro}, ${viaCepData.localidade}, ${viaCepData.uf}`,
+      address: fullAddress,
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
       phone: 'N/A'
     };
 
-    // Salva no banco de dados
     const newStore = new this.storeModel(newStoreData);
     return newStore.save();
   }
