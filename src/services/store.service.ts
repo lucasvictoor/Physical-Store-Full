@@ -119,8 +119,16 @@ export class StoreService {
     return { message: `Loja com o ID ${id} foi deletada com sucesso.` };
   }
 
-  async create(storeData: { name: string; postalCode: string; phone: string; email: string }): Promise<Store> {
-    const { name, postalCode, phone, email } = storeData;
+  async create(storeData: {
+    name: string;
+    postalCode: string;
+    phone: string;
+    email: string;
+    takeOutInStore: boolean;
+    shippingTimeInDays: number;
+    country: string;
+  }): Promise<Store> {
+    const { name, postalCode, phone, email, takeOutInStore, shippingTimeInDays, country } = storeData;
 
     const formattedCep = postalCode.replace(/[^0-9]/g, '');
 
@@ -144,7 +152,11 @@ export class StoreService {
       longitude: coordinates.longitude,
       phone,
       email,
-      state
+      state,
+      takeOutInStore,
+      shippingTimeInDays,
+      postalCode,
+      country
     };
 
     const newStore = new this.storeModel(newStoreData);

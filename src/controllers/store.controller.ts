@@ -20,7 +20,7 @@ export class StoreController {
   async getAllStores(
     @Query('limit') limit?: string,
     @Query('offset') offset?: string
-  ): Promise<{ stores: any[]; total: number }> {
+  ): Promise<{ stores: any[]; limit: number; offset: number; total: number }> {
     const parsedLimit = limit ? parseInt(limit, 10) : 10;
     const parsedOffset = offset ? parseInt(offset, 10) : 0;
 
