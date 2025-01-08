@@ -1,8 +1,9 @@
-import { Controller, Delete, Get, Post, Body, Param, NotFoundException, Query } from '@nestjs/common';
+import { Controller, Delete, Post, Get, Body, Param, NotFoundException, Query } from '@nestjs/common';
 import { StoreService } from '../services/store.service';
 import { Store } from '../models/store.model';
 import { ViaCepService } from '../services/viacep.service';
 import { GeocodingService } from '../services/geocoding.service';
+import { CreateStoreDto } from '../dto/create-store.dto';
 
 @Controller('stores')
 export class StoreController {
@@ -63,13 +64,7 @@ export class StoreController {
 
   // Rota para criar uma nova loja
   @Post()
-  async createStore(@Body() body: { name: string; postalCode: string }): Promise<Store> {
-    const { name, postalCode } = body;
-
-    if (!name || !postalCode) {
-      throw new NotFoundException('Nome e CEP são obrigatórios para criar uma loja.');
-    }
-
-    return this.storeService.create({ name, postalCode });
+  async createStore(@Body() body: CreateStoreDto): Promise<Store> {
+    return this.storeService.create(body);
   }
 }
