@@ -127,8 +127,9 @@ export class StoreService {
     takeOutInStore: boolean;
     shippingTimeInDays: number;
     country: string;
+    type: string;
   }): Promise<Store> {
-    const { name, postalCode, phone, email, takeOutInStore, shippingTimeInDays, country } = storeData;
+    const { name, postalCode, phone, email, takeOutInStore, shippingTimeInDays, country, type } = storeData;
 
     const formattedCep = postalCode.replace(/[^0-9]/g, '');
 
@@ -156,7 +157,8 @@ export class StoreService {
       takeOutInStore,
       shippingTimeInDays,
       postalCode,
-      country
+      country,
+      type
     };
 
     const newStore = new this.storeModel(newStoreData);

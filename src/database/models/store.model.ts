@@ -35,6 +35,9 @@ export class Store extends Document {
 
   @Prop({ required: true })
   country: string;
+
+  @Prop({ required: true, enum: ['PDV', 'Loja'] })
+  type: string;
 }
 
 export const StoreSchema = SchemaFactory.createForClass(Store);
