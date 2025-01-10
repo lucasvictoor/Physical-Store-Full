@@ -14,7 +14,5 @@ import { CorreiosService } from './store/controllers/services/correios.service';
   providers: [StoreService, ViaCepService, GeocodingService, CorreiosService]
 })
 export class StoreModule implements OnModuleInit {
-  onModuleInit() {
-    console.log('StoreModule carregado com sucesso!');
-  }
+  onModuleInit() {}
 }

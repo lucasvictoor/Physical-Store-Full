@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Store } from '../../../../database/models/store.model';
@@ -9,6 +9,8 @@ import { CorreiosService } from './correios.service';
 
 @Injectable()
 export class StoreService {
+  private readonly logger = new Logger(StoreService.name);
+
   constructor(
     @InjectModel(Store.name) private readonly storeModel: Model<Store>,
     private readonly viaCepService: ViaCepService,
@@ -17,23 +19,29 @@ export class StoreService {
   ) {}
 
   async findAll(limit = 10, offset = 0): Promise<{ stores: Store[]; total: number }> {
+    this.logger.log(`Buscando todas as lojas com limit: ${limit} e offset: ${offset}`);
     const [stores, total] = await Promise.all([
       this.storeModel.find().skip(offset).limit(limit).exec(),
       this.storeModel.countDocuments().exec()
     ]);
 
+    this.logger.log(`Buscado ${stores.length} lojas de ${total}`);
     return { stores, total };
   }
 
   async findById(id: string): Promise<Store> {
+    this.logger.log(`Buscando loja com ID: ${id}`);
     const store = await this.storeModel.findById(id).exec();
     if (!store) {
+      this.logger.warn(`Loja com ID ${id} não encontrada!`);
       throw new Error(`Loja com o ID ${id} não foi encontrada.`);
     }
+    this.logger.log(`Loja com ID ${id} encontrada com sucesso!`);
     return store;
   }
 
   async findByState(state: string): Promise<{ stores: Store[]; total: number }> {
+    this.logger.log(`Buscando lojas pelo estado: ${state}`);
     const stores = await this.storeModel
       .find({
         state: { $regex: new RegExp(`^${state}$`, 'i') }
@@ -41,9 +49,11 @@ export class StoreService {
       .exec();
 
     if (!stores || stores.length === 0) {
+      this.logger.warn(`Nenhuma loja encontrada para o estado: ${state}`);
       throw new Error(`Nenhuma loja encontrada para o estado: ${state}`);
     }
 
+    this.logger.log(`Encontrado ${stores.length} lojas para o estado: ${state}`);
     return {
       stores,
       total: stores.length
@@ -51,16 +61,20 @@ export class StoreService {
   }
 
   async delete(id: string): Promise<{ message: string }> {
+    this.logger.log(`Exclui loja com o ID: ${id}`);
     const result = await this.storeModel.findByIdAndDelete(id).exec();
 
     if (!result) {
+      this.logger.warn(`Loja com o ID ${id} não foi encontrada.`);
       throw new Error(`Loja com o ID ${id} não foi encontrada.`);
     }
 
+    this.logger.log(`Loja com o ID ${id} foi deletada com sucesso.`);
     return { message: `Loja com o ID ${id} foi deletada com sucesso.` };
   }
 
   async updateStore(id: string, updateData: Partial<Store>): Promise<Store> {
+    this.logger.log(`Atualizando loja com ID: ${id}`);
     const updatedStore = await this.storeModel
       .findByIdAndUpdate(id, updateData, {
         new: true,
@@ -69,9 +83,11 @@ export class StoreService {
       .exec();
 
     if (!updatedStore) {
+      this.logger.warn(`Loja com o ID ${id} não foi atualizada.`);
       throw new Error(`Loja com o ID ${id} não foi encontrada.`);
     }
 
+    this.logger.log(`Loja com ID ${id} atualizada com sucesso!`);
     return updatedStore;
   }
 
@@ -85,6 +101,7 @@ export class StoreService {
     country: string;
     type: string;
   }): Promise<Store> {
+    this.logger.log(`Criando uma nova loja com nome: ${storeData.name}`);
     const { name, postalCode, phone, email, takeOutInStore, shippingTimeInDays, country, type } = storeData;
 
     const formattedCep = postalCode.replace(/[^0-9]/g, '');
@@ -118,11 +135,13 @@ export class StoreService {
       city
     };
 
+    this.logger.log(`Loja ${storeData.name} criada com sucesso`);
     const newStore = new this.storeModel(newStoreData);
     return newStore.save();
   }
 
   async getStoresByCep(cep: string) {
+    this.logger.log(`Buscando lojas pelo CEP: ${cep}`);
     try {
       const address = await this.viaCepService.getAddress(cep);
       const fullAddress = `${address.logradouro}, ${address.localidade}, ${address.uf}`;
@@ -178,12 +197,14 @@ export class StoreService {
 
       nearbyStores.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
 
+      this.logger.log(`Achado ${nearbyStores.length} lojas proximas ao CEP: ${cep}`);
       return {
         userCoordinates,
         totalStores: nearbyStores.length,
         nearbyStores
       };
     } catch (error) {
+      this.logger.error(`Erro ao processar lojas próximas ao CEP: ${cep}`, error.stack);
       console.error('Erro em getStoresByCep:', error.message);
       throw new Error('Erro ao processar lojas próximas ao CEP.');
     }

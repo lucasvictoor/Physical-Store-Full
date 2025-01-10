@@ -15,9 +15,7 @@ export class StoreController {
     private readonly viaCepService: ViaCepService,
     private readonly geocodingService: GeocodingService,
     private readonly correiosService: CorreiosService
-  ) {
-    console.log('StoreController carregado com sucesso!');
-  }
+  ) {}
 
   // Rota para listar todas as lojas
   @Get()
