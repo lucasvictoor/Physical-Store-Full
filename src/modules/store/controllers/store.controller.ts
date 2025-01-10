@@ -1,12 +1,12 @@
-import { Controller, Delete, Post, Get, Body, Patch, Param, NotFoundException, Query } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import { StoreService } from './services/store.service';
-import { Store } from '../../../database/models/store.model';
 import { ViaCepService } from './services/viacep.service';
+import { Store } from '../../../database/models/store.model';
+import { CorreiosService } from './services/correios.service';
 import { GeocodingService } from './services/geocoding.service';
 import { CreateStoreDto } from '../../../common/dto/create-store.dto';
 import { StoreResponseDto } from '../../../common/dto/store-response.dto';
-import { plainToInstance } from 'class-transformer';
-import { CorreiosService } from './services/correios.service';
+import { Controller, Delete, Post, Get, Body, Patch, Param, NotFoundException, Query } from '@nestjs/common';
 
 @Controller('stores')
 export class StoreController {

@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Store } from '../../../../database/models/store.model';
+import { InjectModel } from '@nestjs/mongoose';
 import { ViaCepService } from './viacep.service';
-import { GeocodingService } from './geocoding.service';
-import { calculateDistance } from '../../../../common/utils/conv-distance';
+import { Injectable, Logger } from '@nestjs/common';
 import { CorreiosService } from './correios.service';
+import { GeocodingService } from './geocoding.service';
+import { Store } from '../../../../database/models/store.model';
+import { calculateDistance } from '../../../../common/utils/conv-distance';
 
 @Injectable()
 export class StoreService {
