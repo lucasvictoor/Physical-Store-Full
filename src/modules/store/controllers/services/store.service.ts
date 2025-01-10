@@ -141,7 +141,7 @@ export class StoreService {
   }
 
   async getStoresByCep(cep: string) {
-    this.logger.log(`Buscando lojas próximas pelo CEP: ${cep}`);
+    this.logger.log(`Buscando lojas pelo CEP: ${cep}`);
     try {
       const address = await this.viaCepService.getAddress(cep);
       const fullAddress = `${address.logradouro}, ${address.localidade}, ${address.uf}`;
@@ -160,30 +160,45 @@ export class StoreService {
           store.longitude
         );
 
-        // Aplicar filtro para incluir apenas lojas dentro de 50 km
-        if (distance > 50) {
-          continue;
-        }
-
         let value = [];
 
+        // Aplicando as regras
         if (store.type === 'PDV') {
-          value = [
-            {
-              prazo: '1 dia útil',
-              price: 'R$ 15,00',
-              description: 'Motoboy'
-            }
-          ];
+          if (distance > 50) {
+            // Regra (PDV + de 50Km não é listado)
+            continue;
+          } else {
+            // Regra (PDV - de 50Km entrega fixa)
+            value = [
+              {
+                prazo: '1 dia útil',
+                price: 'R$ 15,00',
+                description: 'Motoboy'
+              }
+            ];
+          }
         } else if (store.type === 'Loja') {
-          try {
-            value = await this.correiosService.calcularFrete(cep, store.postalCode);
-          } catch (error) {
-            console.error(`Erro ao calcular frete para a loja ${store.name}:`, error.message);
-            value = [{ error: 'Erro ao calcular frete.' }];
+          if (distance > 50) {
+            // Regra (Loja + de 50Km = Frete Correios)
+            try {
+              value = await this.correiosService.calcularFrete(cep, store.postalCode);
+            } catch (error) {
+              console.error(`Erro ao calcular frete para a loja ${store.name}:`, error.message);
+              value = [{ error: 'Erro ao calcular frete.' }];
+            }
+          } else {
+            // Regra (Loja - de 50Km entrega igual PVD c/valor fixo)
+            value = [
+              {
+                prazo: '1 dia útil',
+                price: 'R$ 15,00',
+                description: 'Motoboy'
+              }
+            ];
           }
         } else {
           console.warn(`Tipo de loja não reconhecido: ${store.type}`);
+          continue;
         }
 
         nearbyStores.push({
