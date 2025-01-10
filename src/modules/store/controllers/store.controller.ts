@@ -1,4 +1,4 @@
-import { Controller, Delete, Post, Get, Body, Param, NotFoundException, Query } from '@nestjs/common';
+import { Controller, Delete, Post, Get, Body, Patch, Param, NotFoundException, Query } from '@nestjs/common';
 import { StoreService } from './services/store.service';
 import { Store } from '../../../database/models/store.model';
 import { ViaCepService } from './services/viacep.service';
@@ -84,6 +84,16 @@ export class StoreController {
   async deleteStore(@Param('id') id: string): Promise<{ message: string }> {
     try {
       return await this.storeService.delete(id);
+    } catch (error) {
+      throw new NotFoundException(error.message);
+    }
+  }
+
+  // Rota para editar uma loja pelo ID
+  @Patch(':id')
+  async updateStore(@Param('id') id: string, @Body() updateData: Partial<Store>): Promise<Store> {
+    try {
+      return await this.storeService.updateStore(id, updateData);
     } catch (error) {
       throw new NotFoundException(error.message);
     }

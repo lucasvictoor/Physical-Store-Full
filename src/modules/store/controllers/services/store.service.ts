@@ -60,6 +60,21 @@ export class StoreService {
     return { message: `Loja com o ID ${id} foi deletada com sucesso.` };
   }
 
+  async updateStore(id: string, updateData: Partial<Store>): Promise<Store> {
+    const updatedStore = await this.storeModel
+      .findByIdAndUpdate(id, updateData, {
+        new: true,
+        runValidators: true
+      })
+      .exec();
+
+    if (!updatedStore) {
+      throw new Error(`Loja com o ID ${id} não foi encontrada.`);
+    }
+
+    return updatedStore;
+  }
+
   async create(storeData: {
     name: string;
     postalCode: string;
