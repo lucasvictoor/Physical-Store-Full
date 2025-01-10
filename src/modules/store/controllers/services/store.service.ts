@@ -141,7 +141,7 @@ export class StoreService {
   }
 
   async getStoresByCep(cep: string) {
-    this.logger.log(`Buscando lojas pelo CEP: ${cep}`);
+    this.logger.log(`Buscando lojas próximas pelo CEP: ${cep}`);
     try {
       const address = await this.viaCepService.getAddress(cep);
       const fullAddress = `${address.logradouro}, ${address.localidade}, ${address.uf}`;
@@ -197,9 +197,8 @@ export class StoreService {
 
       nearbyStores.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
 
-      this.logger.log(`Achado ${nearbyStores.length} lojas proximas ao CEP: ${cep}`);
+      this.logger.log(`Achado ${nearbyStores.length} lojas próximas ao CEP: ${cep}`);
       return {
-        userCoordinates,
         totalStores: nearbyStores.length,
         nearbyStores
       };
