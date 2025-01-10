@@ -6,6 +6,7 @@ import { CorreiosService } from './correios.service';
 import { GeocodingService } from './geocoding.service';
 import { Store } from '../../../../database/models/store.model';
 import { calculateDistance } from '../../../../common/utils/conv-distance';
+import { calculatePdvDeliveryTime } from '../../../../common/utils/delivery-time';
 
 @Injectable()
 export class StoreService {
@@ -169,9 +170,10 @@ export class StoreService {
             continue;
           } else {
             // Regra (PDV - de 50Km entrega fixa)
+            const deliveryTime = calculatePdvDeliveryTime(distance);
             value = [
               {
-                prazo: '1 dia útil',
+                prazo: deliveryTime,
                 price: 'R$ 15,00',
                 description: 'Motoboy'
               }
@@ -188,9 +190,10 @@ export class StoreService {
             }
           } else {
             // Regra (Loja - de 50Km entrega igual PVD c/valor fixo)
+            const deliveryTime = calculatePdvDeliveryTime(distance);
             value = [
               {
-                prazo: '1 dia útil',
+                prazo: deliveryTime,
                 price: 'R$ 15,00',
                 description: 'Motoboy'
               }
