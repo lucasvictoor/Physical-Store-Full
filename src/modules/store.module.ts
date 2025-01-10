@@ -1,12 +1,12 @@
-import { Module, OnModuleInit } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 import { HttpModule } from '@nestjs/axios';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Module, OnModuleInit } from '@nestjs/common';
+import { Store, StoreSchema } from '../database/models/store.model';
 import { StoreController } from './store/controllers/store.controller';
 import { StoreService } from './store/controllers/services/store.service';
-import { Store, StoreSchema } from '../database/models/store.model';
 import { ViaCepService } from './store/controllers/services/viacep.service';
-import { GeocodingService } from './store/controllers/services/geocoding.service';
 import { CorreiosService } from './store/controllers/services/correios.service';
+import { GeocodingService } from './store/controllers/services/geocoding.service';
 
 @Module({
   imports: [MongooseModule.forFeature([{ name: Store.name, schema: StoreSchema }]), HttpModule],
@@ -14,7 +14,5 @@ import { CorreiosService } from './store/controllers/services/correios.service';
   providers: [StoreService, ViaCepService, GeocodingService, CorreiosService]
 })
 export class StoreModule implements OnModuleInit {
-  onModuleInit() {
-    console.log('StoreModule carregado com sucesso!');
-  }
+  onModuleInit() {}
 }

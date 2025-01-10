@@ -1,12 +1,12 @@
-import { Controller, Delete, Post, Get, Body, Param, NotFoundException, Query } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import { StoreService } from './services/store.service';
-import { Store } from '../../../database/models/store.model';
 import { ViaCepService } from './services/viacep.service';
+import { Store } from '../../../database/models/store.model';
+import { CorreiosService } from './services/correios.service';
 import { GeocodingService } from './services/geocoding.service';
 import { CreateStoreDto } from '../../../common/dto/create-store.dto';
 import { StoreResponseDto } from '../../../common/dto/store-response.dto';
-import { plainToInstance } from 'class-transformer';
-import { CorreiosService } from './services/correios.service';
+import { Controller, Delete, Post, Get, Body, Patch, Param, NotFoundException, Query } from '@nestjs/common';
 
 @Controller('stores')
 export class StoreController {
@@ -15,9 +15,7 @@ export class StoreController {
     private readonly viaCepService: ViaCepService,
     private readonly geocodingService: GeocodingService,
     private readonly correiosService: CorreiosService
-  ) {
-    console.log('StoreController carregado com sucesso!');
-  }
+  ) {}
 
   // Rota para listar todas as lojas
   @Get()
@@ -84,6 +82,16 @@ export class StoreController {
   async deleteStore(@Param('id') id: string): Promise<{ message: string }> {
     try {
       return await this.storeService.delete(id);
+    } catch (error) {
+      throw new NotFoundException(error.message);
+    }
+  }
+
+  // Rota para editar uma loja pelo ID
+  @Patch(':id')
+  async updateStore(@Param('id') id: string, @Body() updateData: Partial<Store>): Promise<Store> {
+    try {
+      return await this.storeService.updateStore(id, updateData);
     } catch (error) {
       throw new NotFoundException(error.message);
     }
