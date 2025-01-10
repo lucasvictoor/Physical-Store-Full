@@ -150,6 +150,7 @@ export class StoreService {
       const stores = await this.storeModel.find();
 
       const nearbyStores = [];
+      const pinsMaps = [];
 
       for (const store of stores) {
         const distance = calculateDistance(
@@ -193,6 +194,14 @@ export class StoreService {
           distance: `${distance.toFixed(2)} km`,
           value: value
         });
+
+        pinsMaps.push({
+          position: {
+            lat: store.latitude,
+            lng: store.longitude
+          },
+          title: store.name
+        });
       }
 
       nearbyStores.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
@@ -200,11 +209,11 @@ export class StoreService {
       this.logger.log(`Achado ${nearbyStores.length} lojas próximas ao CEP: ${cep}`);
       return {
         totalStores: nearbyStores.length,
-        nearbyStores
+        nearbyStores,
+        pinsMaps
       };
     } catch (error) {
       this.logger.error(`Erro ao processar lojas próximas ao CEP: ${cep}`, error.stack);
-      console.error('Erro em getStoresByCep:', error.message);
       throw new Error('Erro ao processar lojas próximas ao CEP.');
     }
   }
