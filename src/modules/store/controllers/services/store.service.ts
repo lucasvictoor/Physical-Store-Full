@@ -158,7 +158,8 @@ export class StoreService {
       shippingTimeInDays,
       postalCode,
       country,
-      type
+      type,
+      city
     };
 
     const newStore = new this.storeModel(newStoreData);
