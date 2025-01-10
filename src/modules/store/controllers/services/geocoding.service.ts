@@ -9,7 +9,6 @@ export class GeocodingService {
 
   async getCoordinates(address: string): Promise<{ latitude: number; longitude: number }> {
     this.logger.log(`Buscando coordenadas para o endereço: ${address}`);
-    console.log(`Buscando coordenadas para o endereço: ${address}`);
 
     const apiKey = process.env.GOOGLE_API_KEY;
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
