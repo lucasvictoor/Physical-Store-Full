@@ -1,6 +1,7 @@
 {
   "printWidth": 120,
-  "trailingComma": "none", 
+  "trailingComma": "none",
   "singleQuote": true,
-  "bracketSpacing": true 
+  "bracketSpacing": true,
+  "endOfLine": "lf"
 }
