@@ -6,6 +6,7 @@ import { CorreiosService } from './correios.service';
 import { GeocodingService } from './geocoding.service';
 import { Store } from '../../../../database/models/store.model';
 import { calculateDistance } from '../../../../common/utils/conv-distance';
+import { calculatePdvDeliveryTime } from '../../../../common/utils/delivery-time';
 
 @Injectable()
 export class StoreService {
@@ -150,6 +151,7 @@ export class StoreService {
       const stores = await this.storeModel.find();
 
       const nearbyStores = [];
+      const pinsMaps = [];
 
       for (const store of stores) {
         const distance = calculateDistance(
@@ -159,30 +161,47 @@ export class StoreService {
           store.longitude
         );
 
-        // Aplicar filtro para incluir apenas lojas dentro de 50 km
-        if (distance > 50) {
-          continue;
-        }
-
         let value = [];
 
+        // Aplicando as regras
         if (store.type === 'PDV') {
-          value = [
-            {
-              prazo: '1 dia útil',
-              price: 'R$ 15,00',
-              description: 'Motoboy'
-            }
-          ];
+          if (distance > 50) {
+            // Regra (PDV + de 50Km não é listado)
+            continue;
+          } else {
+            // Regra (PDV - de 50Km entrega fixa)
+            const deliveryTime = calculatePdvDeliveryTime(distance);
+            value = [
+              {
+                prazo: deliveryTime,
+                price: 'R$ 15,00',
+                description: 'Motoboy'
+              }
+            ];
+          }
         } else if (store.type === 'Loja') {
-          try {
-            value = await this.correiosService.calcularFrete(cep, store.postalCode);
-          } catch (error) {
-            console.error(`Erro ao calcular frete para a loja ${store.name}:`, error.message);
-            value = [{ error: 'Erro ao calcular frete.' }];
+          if (distance > 50) {
+            // Regra (Loja + de 50Km = Frete Correios)
+            try {
+              value = await this.correiosService.calcularFrete(cep, store.postalCode);
+            } catch (error) {
+              console.error(`Erro ao calcular frete para a loja ${store.name}:`, error.message);
+              value = [{ error: 'Erro ao calcular frete.' }];
+            }
+          } else {
+            // Regra (Loja - de 50Km entrega igual PVD c/valor fixo)
+            const deliveryTime = calculatePdvDeliveryTime(distance);
+            value = [
+              {
+                prazo: deliveryTime,
+                price: 'R$ 15,00',
+                description: 'Motoboy'
+              }
+            ];
           }
         } else {
           console.warn(`Tipo de loja não reconhecido: ${store.type}`);
+          continue;
         }
 
         nearbyStores.push({
@@ -193,19 +212,26 @@ export class StoreService {
           distance: `${distance.toFixed(2)} km`,
           value: value
         });
+
+        pinsMaps.push({
+          position: {
+            lat: store.latitude,
+            lng: store.longitude
+          },
+          title: store.name
+        });
       }
 
       nearbyStores.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
 
-      this.logger.log(`Achado ${nearbyStores.length} lojas proximas ao CEP: ${cep}`);
+      this.logger.log(`Achado ${nearbyStores.length} lojas próximas ao CEP: ${cep}`);
       return {
-        userCoordinates,
         totalStores: nearbyStores.length,
-        nearbyStores
+        nearbyStores,
+        pinsMaps
       };
     } catch (error) {
       this.logger.error(`Erro ao processar lojas próximas ao CEP: ${cep}`, error.stack);
-      console.error('Erro em getStoresByCep:', error.message);
       throw new Error('Erro ao processar lojas próximas ao CEP.');
     }
   }
