@@ -5,13 +5,15 @@ import { Store } from '../../../../database/models/store.model';
 import { ViaCepService } from './viacep.service';
 import { GeocodingService } from './geocoding.service';
 import { calculateDistance } from '../../../../common/utils/conv-distance';
+import { CorreiosService } from './correios.service';
 
 @Injectable()
 export class StoreService {
   constructor(
     @InjectModel(Store.name) private readonly storeModel: Model<Store>,
     private readonly viaCepService: ViaCepService,
-    private readonly geocodingService: GeocodingService
+    private readonly geocodingService: GeocodingService,
+    private readonly correiosService: CorreiosService
   ) {}
 
   async findAll(limit = 10, offset = 0): Promise<{ stores: Store[]; total: number }> {
@@ -29,67 +31,6 @@ export class StoreService {
       throw new Error(`Loja com o ID ${id} não foi encontrada.`);
     }
     return store;
-  }
-
-  async findByCep(cep: string): Promise<any> {
-    console.log('CEP recebido no serviço:', cep);
-
-    const viaCepData = await this.viaCepService.getAddress(cep);
-    if (!viaCepData) {
-      throw new Error('CEP inválido ou não encontrado.');
-    }
-
-    console.log('Dados do ViaCEP:', viaCepData);
-
-    // Buscar coordenadas pelo endereço completo
-    const fullAddress = `${viaCepData.logradouro}, ${viaCepData.localidade}, ${viaCepData.uf}`;
-    console.log('Buscando coordenadas para o endereço completo:', fullAddress);
-    const userCoordinates = await this.geocodingService.getCoordinates(fullAddress);
-
-    console.log('Coordenadas do endereço fornecido:', userCoordinates);
-
-    const stores = await this.storeModel.find().exec();
-
-    const storesWithDistance = stores.map((store) => {
-      const distance = calculateDistance(
-        userCoordinates.latitude,
-        userCoordinates.longitude,
-        store.latitude,
-        store.longitude
-      );
-
-      const formattedDistance = parseFloat(distance.toFixed(2));
-      const deliveryType = formattedDistance <= 50 ? 'Motoboy' : 'Correios';
-
-      return {
-        ...store.toObject(),
-        distance: formattedDistance,
-        deliveryType
-      };
-    });
-
-    // Verificar se há lojas próximas
-    if (storesWithDistance.length === 0) {
-      return { message: 'Nenhuma loja encontrada próxima ao CEP fornecido.' };
-    }
-
-    // Ordenar por distância e formatar a resposta
-    return {
-      totalStores: storesWithDistance.length,
-      stores: storesWithDistance
-        .sort((a, b) => a.distance - b.distance)
-        .map((store) => ({
-          id: store._id,
-          name: store.name,
-          location: {
-            address: store.address,
-            latitude: store.latitude,
-            longitude: store.longitude,
-            distance: `${store.distance} km`
-          },
-          deliveryType: store.deliveryType
-        }))
-    };
   }
 
   async findByState(state: string): Promise<{ stores: Store[]; total: number }> {
@@ -127,8 +68,9 @@ export class StoreService {
     takeOutInStore: boolean;
     shippingTimeInDays: number;
     country: string;
+    type: string;
   }): Promise<Store> {
-    const { name, postalCode, phone, email, takeOutInStore, shippingTimeInDays, country } = storeData;
+    const { name, postalCode, phone, email, takeOutInStore, shippingTimeInDays, country, type } = storeData;
 
     const formattedCep = postalCode.replace(/[^0-9]/g, '');
 
@@ -156,46 +98,79 @@ export class StoreService {
       takeOutInStore,
       shippingTimeInDays,
       postalCode,
-      country
+      country,
+      type,
+      city
     };
 
     const newStore = new this.storeModel(newStoreData);
     return newStore.save();
   }
 
-  async getStoresByCepWithType(userCep: string): Promise<any> {
-    const userAddress = await this.viaCepService.getAddress(userCep);
-    if (!userAddress || !userAddress.logradouro || !userAddress.localidade || !userAddress.uf) {
-      throw new Error('CEP inválido ou não encontrado.');
-    }
+  async getStoresByCep(cep: string) {
+    try {
+      const address = await this.viaCepService.getAddress(cep);
+      const fullAddress = `${address.logradouro}, ${address.localidade}, ${address.uf}`;
+      const userCoordinates = await this.geocodingService.getCoordinates(fullAddress);
 
-    // Coordenadas
-    const fullUserAddress = `${userAddress.logradouro}, ${userAddress.localidade}, ${userAddress.uf}`;
-    const userCoordinates = await this.geocodingService.getCoordinates(fullUserAddress);
+      const stores = await this.storeModel.find();
 
-    const stores = await this.storeModel.find().exec();
+      const nearbyStores = [];
 
-    // Classificar as lojas
-    const storesWithType = stores.map((store) => {
-      const distance = calculateDistance(
-        userCoordinates.latitude,
-        userCoordinates.longitude,
-        store.latitude,
-        store.longitude
-      );
+      for (const store of stores) {
+        const distance = calculateDistance(
+          userCoordinates.latitude,
+          userCoordinates.longitude,
+          store.latitude,
+          store.longitude
+        );
 
-      const type = distance <= 50 ? 'PDV' : 'Loja';
+        // Aplicar filtro para incluir apenas lojas dentro de 50 km
+        if (distance > 50) {
+          continue;
+        }
+
+        let value = [];
+
+        if (store.type === 'PDV') {
+          value = [
+            {
+              prazo: '1 dia útil',
+              price: 'R$ 15,00',
+              description: 'Motoboy'
+            }
+          ];
+        } else if (store.type === 'Loja') {
+          try {
+            value = await this.correiosService.calcularFrete(cep, store.postalCode);
+          } catch (error) {
+            console.error(`Erro ao calcular frete para a loja ${store.name}:`, error.message);
+            value = [{ error: 'Erro ao calcular frete.' }];
+          }
+        } else {
+          console.warn(`Tipo de loja não reconhecido: ${store.type}`);
+        }
+
+        nearbyStores.push({
+          name: store.name,
+          city: store.city,
+          postalCode: store.postalCode,
+          type: store.type,
+          distance: `${distance.toFixed(2)} km`,
+          value: value
+        });
+      }
+
+      nearbyStores.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
 
       return {
-        ...store.toObject(),
-        distance: parseFloat(distance.toFixed(2)),
-        type
+        userCoordinates,
+        totalStores: nearbyStores.length,
+        nearbyStores
       };
-    });
-
-    return {
-      totalStores: storesWithType.length,
-      stores: storesWithType.sort((a, b) => a.distance - b.distance)
-    };
+    } catch (error) {
+      console.error('Erro em getStoresByCep:', error.message);
+      throw new Error('Erro ao processar lojas próximas ao CEP.');
+    }
   }
 }

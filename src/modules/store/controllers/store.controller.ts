@@ -6,13 +6,15 @@ import { GeocodingService } from './services/geocoding.service';
 import { CreateStoreDto } from '../../../common/dto/create-store.dto';
 import { StoreResponseDto } from '../../../common/dto/store-response.dto';
 import { plainToInstance } from 'class-transformer';
+import { CorreiosService } from './services/correios.service';
 
 @Controller('stores')
 export class StoreController {
   constructor(
     private readonly storeService: StoreService,
     private readonly viaCepService: ViaCepService,
-    private readonly geocodingService: GeocodingService
+    private readonly geocodingService: GeocodingService,
+    private readonly correiosService: CorreiosService
   ) {
     console.log('StoreController carregado com sucesso!');
   }
@@ -37,18 +39,23 @@ export class StoreController {
     };
   }
 
-  // Rota para buscar loja por CEP
-  @Get('cep/:cep')
-  async getStoresByCep(@Param('cep') cep: string): Promise<any[]> {
-    console.log('Rota /stores/cep/:cep acessada com o CEP:', cep);
+  @Get('testCorreios')
+  async testCorreios() {
     try {
-      const result = await this.storeService.findByCep(cep);
-      console.log('Resultado retornado:', result);
-      return result;
+      const frete = await this.correiosService.calcularFrete('51130705', '91349900');
+      console.log('Resposta do teste da API dos Correios:', frete);
+      return frete;
     } catch (error) {
-      console.error('Erro no método getStoresByCep:', error.message);
-      throw new NotFoundException(error.message);
+      console.error('Erro ao testar API dos Correios:', error.message);
+      return { error: 'Erro ao testar API dos Correios.' };
     }
+  }
+
+  // Rota para buscar lojas por CEP
+  @Get('storeByCep')
+  async storeByCep(@Query('cep') cep: string) {
+    console.log('CEP recebido:', cep);
+    return await this.storeService.getStoresByCep(cep);
   }
 
   // Rota para buscar uma loja pelo ID
@@ -86,15 +93,5 @@ export class StoreController {
   @Post()
   async createStore(@Body() body: CreateStoreDto): Promise<Store> {
     return this.storeService.create(body);
-  }
-
-  // Rota para retornar as lojas com tipo PDV ou Loja
-  @Get('type/cep/:cep')
-  async getStoresWithTypeByCep(@Param('cep') cep: string): Promise<any> {
-    try {
-      return await this.storeService.getStoresByCepWithType(cep);
-    } catch (error) {
-      throw new NotFoundException(error.message);
-    }
   }
 }

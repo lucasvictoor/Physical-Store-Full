@@ -13,4 +13,6 @@ export class StoreResponseDto {
   @Expose() shippingTimeInDays: number;
   @Expose() postalCode: string;
   @Expose() country: string;
+  @Expose() type: string;
+  @Expose() city: string;
 }

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsEmail, IsBoolean, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsString, IsEmail, IsBoolean, IsNumber, IsIn } from 'class-validator';
 
 export class CreateStoreDto {
   @IsNotEmpty()
@@ -28,4 +28,8 @@ export class CreateStoreDto {
   @IsNotEmpty()
   @IsString()
   country: string;
+
+  @IsNotEmpty()
+  @IsIn(['PDV', 'Loja'], { message: 'O tipo deve ser PDV ou Loja.' })
+  type: string;
 }
