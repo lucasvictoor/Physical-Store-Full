@@ -1,4 +1,4 @@
-import { PDV_DELIVERY_CONFIG } from '../config';
+import { PDV_DELIVERY_CONFIG } from './config';
 
 export function calculatePdvDeliveryTime(distance: number): string {
   if (distance <= 10) {
