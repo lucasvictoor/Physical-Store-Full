@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { DatabaseConnection } from '../database/conn';
+import { DatabaseConnection } from '../database/models/conn';
 import { StoreModule } from '../modules/store.module';
 import { LoggerService } from '../common/utils/logger';
 
