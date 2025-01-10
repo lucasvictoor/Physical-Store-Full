@@ -11,7 +11,8 @@ export class StoreService {
   constructor(
     @InjectModel(Store.name) private readonly storeModel: Model<Store>,
     private readonly viaCepService: ViaCepService,
-    private readonly geocodingService: GeocodingService
+    private readonly geocodingService: GeocodingService,
+    private readonly correiosService: CorreiosService
   ) {}
 
   async findAll(limit = 10, offset = 0): Promise<{ stores: Store[]; total: number }> {
