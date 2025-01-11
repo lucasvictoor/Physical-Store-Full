@@ -48,18 +48,6 @@ export class StoreController {
     };
   }
 
-  @Get('testCorreios')
-  async testCorreios() {
-    try {
-      const frete = await this.correiosService.calcularFrete('51130705', '91349900');
-      console.log('Resposta do teste da API dos Correios:', frete);
-      return frete;
-    } catch (error) {
-      console.error('Erro ao testar API dos Correios:', error.message);
-      return { error: 'Erro ao testar API dos Correios.' };
-    }
-  }
-
   // Rota para buscar lojas por CEP
   @Get('storeByCep')
   @ApiResponse(getStoresByCepSchema)
