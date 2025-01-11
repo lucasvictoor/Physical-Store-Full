@@ -30,11 +30,14 @@ export class CorreiosService {
       }
 
       this.logger.log(`Dados de frete obtidos com sucesso para o CEP: ${cepOrigem} -> ${cepDestino}`);
-      const freteData = response.data.map((item) => ({
-        prazo: `${item.prazo}`,
-        price: `R$ ${parseFloat(item.precoAgencia).toFixed(2)}`,
-        description: item.urlTitulo
-      }));
+      const freteData = response.data.map((item) => {
+        const preco = parseFloat(item.precoAgencia.replace('R$', '').replace(',', '.').trim());
+        return {
+          prazo: `${item.prazo}`,
+          price: `R$ ${preco.toFixed(2)}`,
+          description: item.urlTitulo
+        };
+      });
 
       return freteData;
     } catch (error) {
