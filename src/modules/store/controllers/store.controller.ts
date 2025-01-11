@@ -31,11 +31,11 @@ export class StoreController {
   @Get()
   @ApiResponse(listStoresSchema)
   async getAllStores(
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string
+    @Query('limit') limit: string = '1',
+    @Query('offset') offset: string = '0'
   ): Promise<{ stores: StoreResponseDto[]; limit: number; offset: number; total: number }> {
-    const parsedLimit = limit ? parseInt(limit, 10) : 10;
-    const parsedOffset = offset ? parseInt(offset, 10) : 3;
+    const parsedLimit = parseInt(limit, 10) || 1;
+    const parsedOffset = parseInt(offset, 10) || 0;
 
     const { stores, total } = await this.storeService.findAll(parsedLimit, parsedOffset);
     const formattedStores = plainToInstance(StoreResponseDto, stores, { excludeExtraneousValues: true });
@@ -51,9 +51,22 @@ export class StoreController {
   // Rota para buscar lojas por CEP
   @Get('storeByCep')
   @ApiResponse(getStoresByCepSchema)
-  async storeByCep(@Query('cep') cep: string) {
-    console.log('CEP recebido:', cep);
-    return await this.storeService.getStoresByCep(cep);
+  async storeByCep(
+    @Query('cep') cep: string,
+    @Query('limit') limit: string = '1',
+    @Query('offset') offset: string = '0'
+  ): Promise<{ stores: any[]; pins: any[]; limit: number; offset: number; total: number }> {
+    const parsedLimit = parseInt(limit, 10) || 1;
+    const parsedOffset = parseInt(offset, 10) || 0;
+
+    const result = await this.storeService.getStoresByCep(cep, parsedLimit, parsedOffset);
+    return {
+      stores: result.nearbyStores,
+      pins: result.pins,
+      limit: parsedLimit,
+      offset: parsedOffset,
+      total: result.total
+    };
   }
 
   // Rota para buscar uma loja pelo ID
@@ -70,13 +83,21 @@ export class StoreController {
   // Rota para buscar lojas por estado
   @Get('state/:state')
   @ApiResponse(getStoresByStateSchema)
-  async getStoresByState(@Param('state') state: string): Promise<{ stores: Store[]; total: number }> {
-    try {
-      return await this.storeService.findByState(state);
-    } catch (error) {
-      console.error('Erro ao buscar lojas por estado:', error.message);
-      throw new NotFoundException(error.message);
-    }
+  async getStoresByState(
+    @Param('state') state: string,
+    @Query('limit') limit: string = '1',
+    @Query('offset') offset: string = '0'
+  ): Promise<{ stores: Store[]; limit: number; offset: number; total: number }> {
+    const parsedLimit = parseInt(limit, 10) || 1;
+    const parsedOffset = parseInt(offset, 10) || 0;
+
+    const { stores, total } = await this.storeService.findByState(state, parsedLimit, parsedOffset);
+    return {
+      stores,
+      limit: parsedLimit,
+      offset: parsedOffset,
+      total
+    };
   }
 
   // Rota para deletar uma loja pelo ID

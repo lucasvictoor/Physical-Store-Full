@@ -19,7 +19,7 @@ export class StoreService {
     private readonly correiosService: CorreiosService
   ) {}
 
-  async findAll(limit = 10, offset = 0): Promise<{ stores: Store[]; total: number }> {
+  async findAll(limit: number = 1, offset: number = 0): Promise<{ stores: Store[]; total: number }> {
     this.logger.log(`Buscando todas as lojas com limit: ${limit} e offset: ${offset}`);
     const [stores, total] = await Promise.all([
       this.storeModel.find().skip(offset).limit(limit).exec(),
@@ -41,12 +41,14 @@ export class StoreService {
     return store;
   }
 
-  async findByState(state: string): Promise<{ stores: Store[]; total: number }> {
+  async findByState(state: string, limit: number = 1, offset: number = 0): Promise<{ stores: Store[]; total: number }> {
     this.logger.log(`Buscando lojas pelo estado: ${state}`);
     const stores = await this.storeModel
       .find({
         state: { $regex: new RegExp(`^${state}$`, 'i') }
       })
+      .skip(offset)
+      .limit(limit)
       .exec();
 
     if (!stores || stores.length === 0) {
@@ -141,7 +143,11 @@ export class StoreService {
     return newStore.save();
   }
 
-  async getStoresByCep(cep: string) {
+  async getStoresByCep(
+    cep: string,
+    limit: number = 1,
+    offset: number = 0
+  ): Promise<{ nearbyStores: any[]; pins: any[]; total: number }> {
     this.logger.log(`Buscando lojas pelo CEP: ${cep}`);
     try {
       const address = await this.viaCepService.getAddress(cep);
@@ -149,11 +155,14 @@ export class StoreService {
       const userCoordinates = await this.geocodingService.getCoordinates(fullAddress);
 
       const stores = await this.storeModel.find();
+      const total = stores.length;
+
+      const paginatedStores = stores.slice(offset, offset + limit);
 
       const nearbyStores = [];
       const pinsMaps = [];
 
-      for (const store of stores) {
+      for (const store of paginatedStores) {
         const distance = calculateDistance(
           userCoordinates.latitude,
           userCoordinates.longitude,
@@ -226,9 +235,9 @@ export class StoreService {
 
       this.logger.log(`Achado ${nearbyStores.length} lojas próximas ao CEP: ${cep}`);
       return {
-        totalStores: nearbyStores.length,
+        total,
         nearbyStores,
-        pinsMaps
+        pins: pinsMaps
       };
     } catch (error) {
       this.logger.error(`Erro ao processar lojas próximas ao CEP: ${cep}`, error.stack);
