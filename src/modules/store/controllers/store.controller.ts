@@ -4,10 +4,20 @@ import { ViaCepService } from './services/viacep.service';
 import { Store } from '../../../database/models/store.model';
 import { CorreiosService } from './services/correios.service';
 import { GeocodingService } from './services/geocoding.service';
+import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateStoreDto } from '../../../common/dto/create-store.dto';
 import { StoreResponseDto } from '../../../common/dto/store-response.dto';
 import { Controller, Delete, Post, Get, Body, Patch, Param, NotFoundException, Query } from '@nestjs/common';
-
+import {
+  createStoreSchema,
+  editStoreSchema,
+  listStoresSchema,
+  deleteStoreSchema,
+  getStoreByIdSchema,
+  getStoresByStateSchema,
+  getStoresByCepSchema
+} from '../../../common/swagger/store-schemas';
+@ApiTags('Endpoints das Lojas')
 @Controller('stores')
 export class StoreController {
   constructor(
